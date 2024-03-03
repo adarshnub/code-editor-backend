@@ -2,39 +2,39 @@ const express  = require('express')
 const http = require('http')
 const socketIo = require('socket.io')
 const {v4 : uuidv4} = require('uuid')
+const cors = require('cors');
 
 
 
 const app  = express()
 const server = http.createServer(app)
-const io = socketIo(server)
+const io = socketIo(server,{cors: {origin: "*"}})
 
+app.use(cors());
+
+// app.use((req, res, next) => {
+//     res.setHeader('Access-Control-Allow-Origin', 'http://localhost:3000');
+//     next();
+//   });
 
 // store connected users
-const connectedUsers = {};
+// const connectedUsers = {};
 
 io.on('connection', (socket) => {
-    console.log('user connecteed');
+    console.log('a user connecteed');
 
-    // assign unique id to user
-    const userId = uuidv4();
-    connectedUsers[userId] = true;
-
-    // handle code changes
     socket.on('codeChange', (data) => {
-        // broadcast code change to all users except the sender
-        socket.broadcast.emit('codeChange', data);
+        console.log(`recieved data from user : ${data}`)
+        // broadcast code-update to all users
+        io.emit('codeChange', data);
     });
 
-    // handle disconnecttion
+    // dusconnection
     socket.on('disconnect', () => {
-        console.log('user disconneted')
-        delete connectedUsers[userId];
+        console.log('user disconnected');
+    });
 
-        //broadcast connected users to all users
-        io.emit('connectedUSers', Object.keys(connectedUsers));
-    })
-})
+});
 
 const PORT = 3001;
 server.listen(PORT, () => {
